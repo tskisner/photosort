@@ -6,9 +6,11 @@ import subprocess as sp
 import tempfile
 
 import exifread
+import hashlib
 
 
 class Image(object):
+
 
     def __init__(self, path):
         
@@ -30,7 +32,7 @@ class Image(object):
         self.root = mat.group(1)
         self.ext = mat.group(2)
 
-        if self.ext in self.rawext:
+        if self.ext.lower() in self.rawext:
             # We have a raw file.  Extract the embedded image
             # and use this to grab the EXIF tags.
             with tempfile.TemporaryFile() as temp:
@@ -44,14 +46,19 @@ class Image(object):
                 self.tags = exifread.process_file(f)
 
         self._get_date()
+        self.md5 = self._get_md5()
+        self.uid = '{}{}{}:{}'.format(self.year, self.month, self.day, self.name)
 
         print('Image ctor {}'.format(self.path))
         print('  name = {}'.format(self.name))
         print('  root = {}, ext = {}'.format(self.root, self.ext))
+        print('  md5 = {}'.format(self.md5))
         print('  year = {}, month = {}, day = {}'.format(self.year, self.month, self.day))
-        print('  exif:')
-        for k, v in self.tags.items():
-            print ('    {} = {}'.format(k, v))
+        print('  UID = {}'.format(self.uid))
+        #print('  exif:')
+        #for k, v in self.tags.items():
+        #    print ('    {} = {}'.format(k, v))
+
 
     def _get_date(self):
         pat = re.compile(r'.* DateTimeOriginal$')
@@ -63,13 +70,14 @@ class Image(object):
 
         for k in self.tags.keys():
             v = self.tags[k]
-            print('"{}" = "{}"'.format(k, v))
-            mat = pat.match(k)
+            #print('"{}" = "{}"'.format(k, v))
+            mat = pat.match(str(k))
             if mat:
-                print('key {} has DateTimeOriginal'.format(k))
-                datemat = datepat.match(v)
+                #print('key {} has DateTimeOriginal'.format(k))
+                #print('val = {}'.format(str(v)))
+                datemat = datepat.match(str(v))
                 if datemat:
-                    print('val {} had date match'.format(v))
+                    #print('val {} had date match'.format(v))
                     self.year = datemat.group(1)
                     self.month = datemat.group(2)
                     self.day = datemat.group(3)
@@ -80,12 +88,12 @@ class Image(object):
 
             for k in self.tags.keys():
                 v = self.tags[k]
-                mat = pat.match(k)
+                mat = pat.match(str(k))
                 if mat:
-                    print('key {} has DateTime'.format(k))
-                    datemat = datepat.match(v)
+                    #print('key {} has DateTime'.format(k))
+                    datemat = datepat.match(str(v))
                     if datemat:
-                        print('val {} had date match'.format(v))
+                        #print('val {} had date match'.format(v))
                         self.year = datemat.group(1)
                         self.month = datemat.group(2)
                         self.day = datemat.group(3)
@@ -95,6 +103,18 @@ class Image(object):
             raise RuntimeError('file {} does not contain EXIF date information'.format(self.path))
 
         return
+
+
+    def _get_md5(self, blocksize=2**20):
+        m = hashlib.md5()
+        #print('getting md5 of \"{}\"'.format(self.path))
+        with open( self.path, "rb" ) as f:
+            while True:
+                buf = f.read(blocksize)
+                if not buf:
+                    break
+                m.update( buf )
+        return m.hexdigest()
 
 
 if __name__ == "__main__":

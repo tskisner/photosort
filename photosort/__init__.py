@@ -8,5 +8,7 @@ Tools for reading directories of images and sorting by date or exif information.
 
 from _version import __version__
 
-import image
+from .image import Image
+
+
 
