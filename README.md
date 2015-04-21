@@ -46,9 +46,11 @@ And then wait for a while.  If the photosync.db file in the output directory eve
 
 ## FAQ
 
-1.  *But I want to save my hard work invested in tagging my photos using a proprietary software package.  Can't you do something?*
+-  *But I want to save my hard work invested in tagging my photos using a proprietary software package.  Can't you do something?*
 
 >  Sadly, no.  This is the eternal false promise of fancy closed-source applications.  They make some operations easier, but you lose control over your own data.
 
-2.  
+-  *Can't you add feature XXXX?*
+
+>  Why don't you implement it and send me a pull request?  
 
