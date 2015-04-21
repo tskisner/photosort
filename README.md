@@ -17,10 +17,20 @@ When parsing the creation date, EXIF information is checked.  If the image is a 
 During execution, a small sqlite DB is created to store file checksums, etc.  This speeds up re-scanning of directories when looking for new files to import.  NO OTHER METADATA is kept.  For example, iPhoto event names, albums, original directory names, etc are not copied to the output directory.  If you want to tag these new pristine images, I recommend using the tagging feature of [Darktable](http://www.darktable.org/).
 
 
-## Dependencies
+## Dependencies and Installation
+
+You will first need to have:
 
 * Python 3.x
 * [exifread](https://pypi.python.org/pypi/ExifRead) module (pip3 install exifread)
+
+And then you can install the package with:
+
+```
+$> python3 setup.py install --prefix=/path/to/somewhere
+```
+
+where the prefix should be in your PYTHONPATH.
 
 
 ## Usage

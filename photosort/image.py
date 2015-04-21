@@ -10,9 +10,7 @@ import hashlib
 
 
 image_nonraw_ext = [
-    'jpg', 'jpeg', 'tif', 'tiff', 'png',
-    'pbm', 'ppm', 'pnm', 'pgm', 'bmp', 'gif',
-    'pdf'
+    'jpg', 'jpeg', 'tif', 'tiff'
 ]
 
 image_raw_ext = [
