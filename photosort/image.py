@@ -4,6 +4,7 @@ import sys
 import re
 import subprocess as sp
 import tempfile
+import datetime
 
 import exifread
 import hashlib
@@ -124,7 +125,22 @@ class Image(object):
                         return
 
         if self.year is None:
-            raise RuntimeError('file {} does not contain EXIF date information'.format(self.path))
+            # We have no EXIF date information.  Just use the file
+            # modification time (not ideal).
+            t = os.path.getmtime(self.path)
+            tstr = str(datetime.datetime.fromtimestamp(t))
+            datepat = re.compile(r'^(\d*)-(\d*)-(\d*)\s+(\d*):(\d*):(\d*)\s*')
+            datemat = datepat.match(tstr)
+            if datemat:
+                self.year = datemat.group(1)
+                self.month = datemat.group(2)
+                self.day = datemat.group(3)
+                self.hour = datemat.group(4)
+                self.minute = datemat.group(5)
+                self.second = str(int(float(datemat.group(6))))
+            else:
+                raise RuntimeError('cannot get date/time from EXIF or filesystem for {}', self.path)
+
 
         return
 
