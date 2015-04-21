@@ -60,16 +60,23 @@ class Image(object):
                 proc_dcraw = sp.Popen ( [ 'dcraw', '-c', '-e', path ], stdout=temp, stderr=None, stdin=None )
                 proc_dcraw.wait()
                 temp.seek(0, 0)
-                self.tags = exifread.process_file(temp)
+                self.exif = exifread.process_file(temp)
 
         else:
             with open(self.path, 'rb') as f:
-                self.tags = exifread.process_file(f)
+                self.exif = exifread.process_file(f)
 
         self._get_date()
         self.md5 = image_md5(self.path)
         self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
-
+        # load any existing tags
+        self.tags = []
+        tagfile = self.path + '.tags'
+        if os.path.isfile(tagfile):
+            tfile = open(tagfile, 'r')
+            tagstr = tfile.readline().rstrip('\n')
+            tfile.close()
+            self.tags = tagstr.split(',')
         print('Image ctor {}'.format(self.path))
         print('  name = {}'.format(self.name))
         print('  root = {}, ext = {}'.format(self.root, self.ext))
@@ -77,8 +84,10 @@ class Image(object):
         print('  {}-{}-{} {}:{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second))
         print('  UID = {}'.format(self.uid))
         print('  exif:')
-        for k, v in self.tags.items():
+        for k, v in self.exif.items():
             print ('    {} = {}'.format(k, v))
+        for v in self.tags:
+            print ('  tag: {}'.format(v))
 
 
     def _get_date(self):
@@ -89,8 +98,8 @@ class Image(object):
         self.month = None
         self.day = None
 
-        for k in self.tags.keys():
-            v = self.tags[k]
+        for k in self.exif.keys():
+            v = self.exif[k]
             #print('"{}" = "{}"'.format(k, v))
             mat = pat.match(str(k))
             if mat:
@@ -110,8 +119,8 @@ class Image(object):
         if self.year is None:
             pat = re.compile(r'.* DateTime$')
 
-            for k in self.tags.keys():
-                v = self.tags[k]
+            for k in self.exif.keys():
+                v = self.exif[k]
                 mat = pat.match(str(k))
                 if mat:
                     #print('key {} has DateTime'.format(k))
