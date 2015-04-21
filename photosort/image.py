@@ -9,20 +9,41 @@ import exifread
 import hashlib
 
 
+image_nonraw_ext = [
+    'jpg', 'jpeg', 'tif', 'tiff', 'png',
+    'pbm', 'ppm', 'pnm', 'pgm', 'bmp', 'gif',
+    'pdf'
+]
+
+image_raw_ext = [
+    '3fr', 'ari',
+    'arw', 'bay', 'crw', 'cr2', 'cap', 'dcs',
+    'dcr', 'dng', 'drf', 'eip', 'erf', 'fff', 
+    'iiq', 'k25', 'kdc', 'mdc', 'mef', 'mos',
+    'mrw', 'nef', 'nrw', 'obm', 'orf', 'pef',
+    'ptx', 'pxn', 'r3d', 'raf', 'raw', 'rwl',
+    'rw2', 'rwz', 'sr2', 'srf', 'srw', 'x3f'
+]
+
+image_ext = image_nonraw_ext + image_raw_ext
+
+
+def image_md5(filename, blocksize=2**20):
+    m = hashlib.md5()
+    #print('getting md5 of \"{}\"'.format(self.path))
+    with open( filename, "rb" ) as f:
+        while True:
+            buf = f.read(blocksize)
+            if not buf:
+                break
+            m.update( buf )
+    return m.hexdigest()
+
+
 class Image(object):
 
 
     def __init__(self, path):
-        
-        self.rawext = [
-            '3fr', 'ari',
-            'arw', 'bay', 'crw', 'cr2', 'cap', 'dcs',
-            'dcr', 'dng', 'drf', 'eip', 'erf', 'fff', 
-            'iiq', 'k25', 'kdc', 'mdc', 'mef', 'mos',
-            'mrw', 'nef', 'nrw', 'obm', 'orf', 'pef',
-            'ptx', 'pxn', 'r3d', 'raf', 'raw', 'rwl',
-            'rw2', 'rwz', 'sr2', 'srf', 'srw', 'x3f'
-        ]
 
         self.path = path
         self.name = os.path.basename(self.path)
@@ -32,7 +53,7 @@ class Image(object):
         self.root = mat.group(1)
         self.ext = mat.group(2)
 
-        if self.ext.lower() in self.rawext:
+        if self.ext.lower() in image_raw_ext:
             # We have a raw file.  Extract the embedded image
             # and use this to grab the EXIF tags.
             with tempfile.TemporaryFile() as temp:
@@ -46,23 +67,23 @@ class Image(object):
                 self.tags = exifread.process_file(f)
 
         self._get_date()
-        self.md5 = self._get_md5()
-        self.uid = '{}{}{}:{}'.format(self.year, self.month, self.day, self.name)
+        self.md5 = image_md5(self.path)
+        self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
 
         print('Image ctor {}'.format(self.path))
         print('  name = {}'.format(self.name))
         print('  root = {}, ext = {}'.format(self.root, self.ext))
         print('  md5 = {}'.format(self.md5))
-        print('  year = {}, month = {}, day = {}'.format(self.year, self.month, self.day))
+        print('  {}-{}-{} {}:{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second))
         print('  UID = {}'.format(self.uid))
-        #print('  exif:')
-        #for k, v in self.tags.items():
-        #    print ('    {} = {}'.format(k, v))
+        print('  exif:')
+        for k, v in self.tags.items():
+            print ('    {} = {}'.format(k, v))
 
 
     def _get_date(self):
         pat = re.compile(r'.* DateTimeOriginal$')
-        datepat = re.compile(r'^(\d*):(\d*):(\d*)\s+.*')
+        datepat = re.compile(r'^(\d*):(\d*):(\d*)\s+(\d*):(\d*):(\d*)\s*')
         
         self.year = None
         self.month = None
@@ -81,6 +102,9 @@ class Image(object):
                     self.year = datemat.group(1)
                     self.month = datemat.group(2)
                     self.day = datemat.group(3)
+                    self.hour = datemat.group(4)
+                    self.minute = datemat.group(5)
+                    self.second = datemat.group(6)
                     return
 
         if self.year is None:
@@ -97,6 +121,9 @@ class Image(object):
                         self.year = datemat.group(1)
                         self.month = datemat.group(2)
                         self.day = datemat.group(3)
+                        self.hour = datemat.group(4)
+                        self.minute = datemat.group(5)
+                        self.second = datemat.group(6)
                         return
 
         if self.year is None:
@@ -104,17 +131,6 @@ class Image(object):
 
         return
 
-
-    def _get_md5(self, blocksize=2**20):
-        m = hashlib.md5()
-        #print('getting md5 of \"{}\"'.format(self.path))
-        with open( self.path, "rb" ) as f:
-            while True:
-                buf = f.read(blocksize)
-                if not buf:
-                    break
-                m.update( buf )
-        return m.hexdigest()
 
 
 if __name__ == "__main__":

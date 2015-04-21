@@ -32,14 +32,14 @@ class DB(object):
 
     def _init_schema(self):
         cur = self.conn.cursor()
-        cur.execute('create table img (uid text unique, name text, md5 text, year integer, month integer, day integer)')
+        cur.execute('create table img (uid text unique, name text, md5 text unique, year integer, month integer, day integer, hour integer, minute integer, second integer)')
         self.conn.commit()
         return
 
 
     def insert(self, im):
         cur = self.conn.cursor()
-        cur.execute('insert into img values (\"{}\", \"{}\", \"{}\", {}, {}, {})'.format(im.uid, im.name, im.md5, int(im.year), int(im.month), int(im.day)))
+        cur.execute('insert into img values (\"{}\", \"{}\", \"{}\", {}, {}, {}, {}, {}, {})'.format(im.uid, im.name, im.md5, int(im.year), int(im.month), int(im.day), int(im.hour), int(im.minute), int(im.second)))
         self.conn.commit()
 
 
@@ -51,6 +51,16 @@ class DB(object):
             return None
         else:
             return tuple(row)
+
+
+    def query_md5(self, chksum):
+        cur = self.conn.cursor()
+        cur.execute('select * from img where md5 = \"{}\"'.format(chksum))
+        row = cur.fetchone()
+        if row is None:
+            return False
+        else:
+            return True
 
 
 
@@ -72,6 +82,10 @@ if __name__ == "__main__":
     result = db.query(img.uid)
     if result is None:
         print('result was None!')
+
+    chk = db.query_md5(img.md5)
+    if not chk:
+        print('cannot find md5 sum {}!'.format(img.md5))
 
     print(result)
 
