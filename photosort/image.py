@@ -69,25 +69,15 @@ class Image(object):
         self._get_date()
         self.md5 = image_md5(self.path)
         self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
-        # load any existing tags
-        self.tags = []
-        tagfile = self.path + '.tags'
-        if os.path.isfile(tagfile):
-            tfile = open(tagfile, 'r')
-            tagstr = tfile.readline().rstrip('\n')
-            tfile.close()
-            self.tags = tagstr.split(',')
-        print('Image ctor {}'.format(self.path))
-        print('  name = {}'.format(self.name))
-        print('  root = {}, ext = {}'.format(self.root, self.ext))
-        print('  md5 = {}'.format(self.md5))
-        print('  {}-{}-{} {}:{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second))
-        print('  UID = {}'.format(self.uid))
-        print('  exif:')
-        for k, v in self.exif.items():
-            print ('    {} = {}'.format(k, v))
-        for v in self.tags:
-            print ('  tag: {}'.format(v))
+        #print('Image ctor {}'.format(self.path))
+        #print('  name = {}'.format(self.name))
+        #print('  root = {}, ext = {}'.format(self.root, self.ext))
+        #print('  md5 = {}'.format(self.md5))
+        #print('  {}-{}-{} {}:{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second))
+        #print('  UID = {}'.format(self.uid))
+        #print('  exif:')
+        #for k, v in self.exif.items():
+        #    print ('    {} = {}'.format(k, v))
 
 
     def _get_date(self):

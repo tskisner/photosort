@@ -33,7 +33,6 @@ class DB(object):
     def _init_schema(self):
         cur = self.conn.cursor()
         cur.execute('create table img (uid text unique, name text, md5 text unique, year integer, month integer, day integer, hour integer, minute integer, second integer)')
-        cur.execute('create table tags (uid text, tagstr text, foreign key(uid) references img(uid))')
         self.conn.commit()
         return
 
@@ -41,8 +40,6 @@ class DB(object):
     def insert(self, im):
         cur = self.conn.cursor()
         cur.execute('insert into img values (\"{}\", \"{}\", \"{}\", {}, {}, {}, {}, {}, {})'.format(im.uid, im.name, im.md5, int(im.year), int(im.month), int(im.day), int(im.hour), int(im.minute), int(im.second)))
-        tagstr = ','.join(im.tags)
-        cur.execute('insert into tags values (\"{}\", \"{}\")'.format(im.uid, tagstr))
         self.conn.commit()
 
 
@@ -53,12 +50,7 @@ class DB(object):
         if row is None:
             return None
         else:
-            cur.execute('select * from tags where uid = \"{}\"'.format(uid))
-            tagrow = cur.fetchone()
-            tags = []
-            if tagrow is not None:
-                tags = list(tuple(tagrow))
-            return tuple(row).append(tags)
+            return tuple(row)
 
 
     def query_md5(self, chksum):

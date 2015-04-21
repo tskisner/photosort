@@ -8,7 +8,7 @@ import argparse
 import photosort as ps
 
 
-def process_images(db, indir, files, tags, outroot):
+def process_images(db, indir, files, outroot):
     for f in files:
         mat = re.match('(.*)\.(.*)', f)
         if not mat:
@@ -20,9 +20,7 @@ def process_images(db, indir, files, tags, outroot):
         chk = ps.image_md5(infile)
         print('checking {}'.format(infile))
         if (not db.query_md5(chk)):
-            print('  adding to DB')
             img = ps.Image(infile)
-            img.tags = tags
             yeardir = os.path.join(outroot, img.year)
             monthdir = os.path.join(yeardir, img.month)
             daydir = os.path.join(monthdir, img.day)
@@ -35,13 +33,10 @@ def process_images(db, indir, files, tags, outroot):
             if not os.path.isdir(daydir):
                 os.mkdir(daydir)
             outfile = os.path.abspath( os.path.join(daydir, img.name) )
-            tagfile = outfile + '.tags'
             if infile != outfile:
                 print('  copying to {}'.format(outfile))
                 shutil.copy2(infile, outfile)
-                with open(tagfile, 'w') as tfile:
-                    tagstr = ','.join(tags) + '\n'
-                    tfile.write(tagstr)
+            print('  adding to DB')
             db.insert(img)
         else:
             print('  found in DB')
@@ -51,16 +46,11 @@ def main():
     parser = argparse.ArgumentParser( description='Organize photos by EXIF data.' )
     parser.add_argument( '--indir', required=True, default='.', help='input directory' )
     parser.add_argument( '--outdir', required=True, default='.', help='output directory' )
-    parser.add_argument( '--reindex', required=False, help='force rebuild of index' )
-    parser.add_argument( '--tags', required=False, help='comma-separated list of tags to apply' )
+    parser.add_argument( '--reindex', required=False, default=False, action='store_true', help='force rebuild of index' )
     args = parser.parse_args()
 
     indir = os.path.abspath(args.indir)
     outdir = os.path.abspath(args.outdir)
-
-    tags = []
-    if args.tags is not None:
-        tags = args.tags.split(',')
 
     index = os.path.join(outdir, 'photosync.db')
 
@@ -75,10 +65,10 @@ def main():
 
     if args.reindex:
         for root, dirs, files in os.walk(outdir):
-            process_images(db, root, files, tags, outdir)
+            process_images(db, root, files, outdir)
 
     for root, dirs, files in os.walk(indir):
-        process_images(db, root, files, tags, outdir)
+        process_images(db, root, files, outdir)
 
 
 
