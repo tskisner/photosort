@@ -42,7 +42,7 @@ def image_md5(filename, blocksize=2**20):
 class Image(object):
 
 
-    def __init__(self, path):
+    def __init__(self, path, year=None, month=None, day=None):
 
         self.path = path
         self.name = os.path.basename(self.path)
@@ -66,6 +66,27 @@ class Image(object):
                 self.exif = exifread.process_file(f)
 
         self._get_date()
+        if year is None:
+            self.year = self.fileyear
+        else:
+            self.year = year
+        if month is None:
+            self.month = self.filemonth
+        else:
+            self.month = month
+        if day is None:
+            self.day = self.fileday
+            self.hour = self.filehour
+            self.minute = self.fileminute
+            self.second = self.filesecond
+        else:
+            # if we are overriding the day, the time
+            # is clearly wrong too.
+            self.day = day
+            self.hour = '00'
+            self.minute = '00'
+            self.second = '00'
+
         self.md5 = image_md5(self.path)
         self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
         #print('Image ctor {}'.format(self.path))
@@ -83,9 +104,12 @@ class Image(object):
         pat = re.compile(r'.* DateTimeOriginal$')
         datepat = re.compile(r'^(\d*):(\d*):(\d*)\s+(\d*):(\d*):(\d*)\s*')
         
-        self.year = None
-        self.month = None
-        self.day = None
+        self.fileyear = None
+        self.filemonth = None
+        self.fileday = None
+        self.filehour = None
+        self.fileminute = None
+        self.filesecond = None
 
         for k in self.exif.keys():
             v = self.exif[k]
@@ -97,12 +121,12 @@ class Image(object):
                 datemat = datepat.match(str(v))
                 if datemat:
                     #print('val {} had date match'.format(v))
-                    self.year = datemat.group(1)
-                    self.month = datemat.group(2)
-                    self.day = datemat.group(3)
-                    self.hour = datemat.group(4)
-                    self.minute = datemat.group(5)
-                    self.second = datemat.group(6)
+                    self.fileyear = datemat.group(1)
+                    self.filemonth = datemat.group(2)
+                    self.fileday = datemat.group(3)
+                    self.filehour = datemat.group(4)
+                    self.fileminute = datemat.group(5)
+                    self.filesecond = datemat.group(6)
                     return
 
         if self.year is None:
@@ -116,12 +140,12 @@ class Image(object):
                     datemat = datepat.match(str(v))
                     if datemat:
                         #print('val {} had date match'.format(v))
-                        self.year = datemat.group(1)
-                        self.month = datemat.group(2)
-                        self.day = datemat.group(3)
-                        self.hour = datemat.group(4)
-                        self.minute = datemat.group(5)
-                        self.second = datemat.group(6)
+                        self.fileyear = datemat.group(1)
+                        self.filemonth = datemat.group(2)
+                        self.fileday = datemat.group(3)
+                        self.filehour = datemat.group(4)
+                        self.fileminute = datemat.group(5)
+                        self.filesecond = datemat.group(6)
                         return
 
         if self.year is None:
@@ -132,12 +156,12 @@ class Image(object):
             datepat = re.compile(r'^(\d*)-(\d*)-(\d*)\s+(\d*):(\d*):(\d*)\s*')
             datemat = datepat.match(tstr)
             if datemat:
-                self.year = datemat.group(1)
-                self.month = datemat.group(2)
-                self.day = datemat.group(3)
-                self.hour = datemat.group(4)
-                self.minute = datemat.group(5)
-                self.second = str(int(float(datemat.group(6))))
+                self.fileyear = datemat.group(1)
+                self.filemonth = datemat.group(2)
+                self.fileday = datemat.group(3)
+                self.filehour = datemat.group(4)
+                self.fileminute = datemat.group(5)
+                self.filesecond = str(int(float(datemat.group(6))))
             else:
                 raise RuntimeError('cannot get date/time from EXIF or filesystem for {}', self.path)
 

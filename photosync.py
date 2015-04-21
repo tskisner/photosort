@@ -8,7 +8,20 @@ import argparse
 import photosort as ps
 
 
-def process_images(db, indir, files, outroot):
+def index_images(db, dir, files):
+    # If images are manually moved to new directories (for example,
+    # due to bad EXIF data), then we want to preserve those changes
+    # when re-indexing.
+    (temp, day) = os.path.split(dir)
+    (temp, month) = os.path.split(temp)
+    (temp, year) = os.path.split(temp)
+    infile = os.path.abspath( os.path.join(dir, f) )
+    for f in files:
+        img = ps.Image(infile, year=year, month=month, day=day)
+        db.insert(img)
+
+
+def import_images(db, indir, files, outroot):
     for f in files:
         mat = re.match('(.*)\.(.*)', f)
         if not mat:
@@ -32,20 +45,37 @@ def process_images(db, indir, files, outroot):
                 os.mkdir(monthdir)
             if not os.path.isdir(daydir):
                 os.mkdir(daydir)
-            outfile = os.path.abspath( os.path.join(daydir, img.name) )
-            if infile != outfile:
-                print('  copying to {}'.format(outfile))
-                shutil.copy2(infile, outfile)
-            print('  adding to DB')
-            db.insert(img)
+
+            result = db.query(img.uid)
+            if result is None:
+                outfile = os.path.abspath( os.path.join(daydir, img.name) )
+                if infile != outfile:
+                    print('  copying to {}'.format(outfile))
+                    shutil.copy2(infile, outfile)
+                print('  adding to DB')
+                db.insert(img)
+            else:
+                # Uh-oh.  We have a file with the same name
+                # and date as an existing image, but with a
+                # DIFFERENT checksum!  Print a warning and
+                # copy it to a new name.
+                print('  WARNING: file with same name and date but different checksum found')
+                print('  WARNING: copying to file name based on checksum to avoid overwrite.')
+                outfile = os.path.abspath( os.path.join(daydir, img.root) ) + '_DUP_' + chk + '.' + img.ext
+                if infile != outfile:
+                    print('  copying to {}'.format(outfile))
+                    shutil.copy2(infile, outfile)
+                # instantiate a new image on this, before adding to DB
+                newimg = ps.Image(outfile)
+                db.insert(newimg)
         else:
             print('  found in DB')
 
 
 def main():
     parser = argparse.ArgumentParser( description='Organize photos by EXIF data.' )
-    parser.add_argument( '--indir', required=True, default='.', help='input directory' )
-    parser.add_argument( '--outdir', required=True, default='.', help='output directory' )
+    parser.add_argument( '--indir', required=False, default='', help='input directory' )
+    parser.add_argument( '--outdir', required=True, default='', help='output directory' )
     parser.add_argument( '--reindex', required=False, default=False, action='store_true', help='force rebuild of index' )
     args = parser.parse_args()
 
@@ -65,10 +95,11 @@ def main():
 
     if args.reindex:
         for root, dirs, files in os.walk(outdir):
-            process_images(db, root, files, outdir)
+            index_images(db, root, files)
 
-    for root, dirs, files in os.walk(indir):
-        process_images(db, root, files, outdir)
+    if indir != '':
+        for root, dirs, files in os.walk(indir):
+            process_images(db, root, files, outdir)
 
 
 
