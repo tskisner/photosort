@@ -32,20 +32,20 @@ class DB(object):
 
     def _init_schema(self):
         cur = self.conn.cursor()
-        cur.execute('create table img (uid text unique, name text, md5 text unique, year integer, month integer, day integer, hour integer, minute integer, second integer)')
+        cur.execute('create table media (uid text unique, name text, md5 text unique, year integer, month integer, day integer, hour integer, minute integer, second integer)')
         self.conn.commit()
         return
 
 
-    def insert(self, im):
+    def insert(self, obj):
         cur = self.conn.cursor()
-        cur.execute('insert into img values (\"{}\", \"{}\", \"{}\", {}, {}, {}, {}, {}, {})'.format(im.uid, im.name, im.md5, int(im.year), int(im.month), int(im.day), int(im.hour), int(im.minute), int(im.second)))
+        cur.execute('insert into media values (\"{}\", \"{}\", \"{}\", {}, {}, {}, {}, {}, {})'.format(obj.uid, obj.name, obj.md5, int(obj.year), int(obj.month), int(obj.day), int(obj.hour), int(obj.minute), int(obj.second)))
         self.conn.commit()
 
 
     def query(self, uid):
         cur = self.conn.cursor()
-        cur.execute('select * from img where uid = \"{}\"'.format(uid))
+        cur.execute('select * from media where uid = \"{}\"'.format(uid))
         row = cur.fetchone()
         if row is None:
             return None
@@ -55,7 +55,7 @@ class DB(object):
 
     def query_md5(self, chksum):
         cur = self.conn.cursor()
-        cur.execute('select * from img where md5 = \"{}\"'.format(chksum))
+        cur.execute('select * from media where md5 = \"{}\"'.format(chksum))
         row = cur.fetchone()
         if row is None:
             return False
@@ -66,7 +66,7 @@ class DB(object):
 
 if __name__ == "__main__":
 
-    from image import Image
+    from media import Image
 
     path = sys.argv[1]
     imgpath = sys.argv[2]

@@ -1,0 +1,58 @@
+
+import os
+import sys
+import shutil
+import re
+import argparse
+from filecmp import dircmp
+
+import photosort as ps
+
+
+def process_dir(dcmp, lpath, rpath):
+    matching = 0
+    bad = 0
+    for name in dcmp.left_only:
+        la = os.path.join(lpath, name)
+        print("deleted {}".format(la))
+    for name in dcmp.right_only:
+        ra = os.path.join(rpath, name)
+        print("created {}".format(ra))
+    for name in dcmp.same_files:
+        la = os.path.join(lpath, name)
+        ra = os.path.join(rpath, name)
+        lmd = ps.file_md5(la)
+        rmd = ps.file_md5(ra)
+        if (lmd != rmd):
+            print("md5 bad {}".format(ra))
+            bad += 1
+        else:
+            matching += 1
+    for name in dcmp.diff_files:
+        la = os.path.join(lpath, name)
+        ra = os.path.join(rpath, name)
+        print("diff in {}".format(ra))
+    print("finish  {} : {} good, {} bad".format(rpath, matching, bad))
+    for sub_dcmp in dcmp.subdirs.values():
+        sub_lpath = os.path.join(lpath, sub_dcmp.left)
+        sub_rpath = os.path.join(rpath, sub_dcmp.right)
+        process_dir(sub_dcmp, sub_lpath, sub_rpath)
+
+
+def main():
+    parser = argparse.ArgumentParser( description='Compare file trees with md5 sums' )
+    parser.add_argument( '--dirleft', required=True, default='', help='directory 1' )
+    parser.add_argument( '--dirright', required=True, default='', help='directory 2' )
+    args = parser.parse_args()
+
+    dleft = os.path.abspath(args.dirleft)
+    dright = os.path.abspath(args.dirright)
+
+    dcmp = dircmp(dleft, dright)
+
+    process_dir(dcmp, dleft, dright)
+
+
+if __name__ == "__main__":
+    main()
+
