@@ -36,6 +36,10 @@ def import_media(db, indir, files, outroot):
         if (ext.lower() not in ps.image_ext) and (ext.lower() not in ps.video_ext):
             continue
         infile = os.path.abspath( os.path.join(indir, f) )
+        album = os.path.basename(indir)
+        safename = re.compile(r'[^0-9a-zA-Z-\.\/]')
+        album = safename.sub('_', album)
+
         chk = ps.file_md5(infile)
         print('checking {}'.format(infile))
         if (not db.query_md5(chk)):
@@ -64,6 +68,7 @@ def import_media(db, indir, files, outroot):
                 if infile != outfile:
                     print('  copying to {}'.format(outfile))
                     shutil.copy2(infile, outfile)
+                ps.album_append(outroot, album, [outfile])
                 print('  adding to DB')
                 db.insert(obj)
             else:
@@ -85,6 +90,7 @@ def import_media(db, indir, files, outroot):
                     db.insert(newvid)
                 else:
                     raise RuntimeError("should never get here...")
+
         else:
             print('  found in DB')
 
@@ -103,6 +109,10 @@ def main():
 
     if not os.path.isdir(outdir):
         os.mkdir(outdir)
+
+    albumdir = os.path.join(outdir, 'albums')
+    if not os.path.isdir(albumdir):
+        os.mkdir(albumdir)
 
     if args.reindex:
         if os.path.isfile(index):

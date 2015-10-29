@@ -124,7 +124,20 @@ def file_date(filename, meta, prior):
         else:
             raise RuntimeError('cannot get date/time from metadata or filesystem for {}', filename)
     return ret
-    
+
+
+def album_append(root, album, files):
+    albumdir = os.path.join(root, 'albums', album)
+    if not os.path.isdir(albumdir):
+        os.mkdir(albumdir)
+    for f in files:
+        filename = os.path.basename(os.path.abspath(f))
+        linkpath = os.path.join(albumdir, filename)
+        if not os.path.islink(linkpath):
+            #print("link {} --> {}".format(linkpath, f))
+            os.symlink(f, linkpath)
+    return
+
 
 class Image(object):
 
