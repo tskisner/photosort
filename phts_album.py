@@ -15,16 +15,19 @@ def find_top_dir():
         if os.path.isdir(test):
             return cursor
         cursor = os.path.dirname(cursor)
-    raise RuntimeError("work directory is not within an image tree")
+    raise RuntimeError("working directory is not within an image tree")
     return ""
 
 
 def main():
     parser = argparse.ArgumentParser( description='Create albums with symbolic links.' )
     parser.add_argument( '--album', required=True, help='album name' )
+    parser.add_argument('files', nargs='*')
     args = parser.parse_args()
+
     topdir = find_top_dir()
-    ps.album_append(topdir, args.album, argv)
+    
+    ps.album_append(topdir, args.album, args.files)
 
 
 if __name__ == "__main__":

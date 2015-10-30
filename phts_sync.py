@@ -9,21 +9,15 @@ import photosort as ps
 
 
 def index_media(db, dir, files):
-    # If files are manually moved to new directories (for example,
-    # due to bad EXIF data), then we want to preserve those changes
-    # when re-indexing.
-    (temp, day) = os.path.split(dir)
-    (temp, month) = os.path.split(temp)
-    (temp, year) = os.path.split(temp)
     for f in files:
         infile = os.path.abspath( os.path.join(dir, f) )
         if ps.is_image(infile):
             print('indexing image {}'.format(infile))
-            img = ps.Image(infile, year=year, month=month, day=day)
+            img = ps.Image(infile)
             db.insert(img)
         elif ps.is_video(infile):
             print('indexing video {}'.format(infile))
-            vid = ps.Video(infile, year=year, month=month, day=day)
+            vid = ps.Video(infile)
             db.insert(vid)
 
 

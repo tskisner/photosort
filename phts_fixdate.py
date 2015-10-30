@@ -1,0 +1,35 @@
+
+import os
+import sys
+import shutil
+import re
+import argparse
+
+import photosort as ps
+
+
+def main():
+    parser = argparse.ArgumentParser( description='Modify creation date by updating metadata and filesystem times.' )
+    parser.add_argument('--date', required=True, help='new date in format YYYYMMDD')
+    parser.add_argument('files', nargs='*')
+    args = parser.parse_args()
+
+    datepat = re.compile(r'^(\d\d\d\d)(\d\d)(\d\d)')
+    mat = datepat.match(args.date)
+    year = 0
+    month = 0
+    day = 0
+    if mat:
+        year = int(mat.group(1))
+        month = int(mat.group(2))
+        day = int(mat.group(3))
+    else:
+        raise RuntimeError("input date argument in wrong format")
+
+    for f in args.files:
+        ps.file_setdate(f, (year, month, day, 0, 0, 0))
+
+
+if __name__ == "__main__":
+    main()
+

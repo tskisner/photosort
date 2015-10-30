@@ -6,6 +6,7 @@ import subprocess as sp
 import json
 import tempfile
 import datetime
+import time
 
 import hashlib
 
@@ -57,6 +58,15 @@ def file_md5(filename, blocksize=2**20):
 def file_json(filename):
     exif = sp.check_output ( [ 'exiftool', '-j', '-sort', filename ], universal_newlines=True )
     return json.loads(exif.rstrip('\r\n'))[0]
+
+
+def file_setdate(filename, date):
+    datestr = "{:04d}:{:02d}:{:02d} {:02d}:{:02d}:{:02d}".format(date[0], date[1], date[2], date[3], date[4], date[5])
+    code = sp.check_call ( [ 'exiftool', '-AllDates={}'.format(datestr), '-overwrite_original', filename ] )
+    st = time.strptime(datestr, "%Y:%m:%d %H:%M:%S")
+    systime = time.mktime(st)
+    os.utime(filename, (systime, systime))
+    return
 
 
 def is_image(filename):
@@ -141,8 +151,7 @@ def album_append(root, album, files):
 
 class Image(object):
 
-
-    def __init__(self, path, year=None, month=None, day=None):
+    def __init__(self, path):
         self.type = 'image'
         self.path = path
         self.name = os.path.basename(self.path)
@@ -169,26 +178,12 @@ class Image(object):
 
         metadate = file_date(self.path, self.meta, image_date_meta)
 
-        if year is None:
-            self.year = metadate['year']
-        else:
-            self.year = year
-        if month is None:
-            self.month = metadate['month']
-        else:
-            self.month = month
-        if day is None:
-            self.day = metadate['day']
-            self.hour = metadate['hour']
-            self.minute = metadate['minute']
-            self.second = metadate['second']
-        else:
-            # if we are overriding the day, the time
-            # is clearly wrong too.
-            self.day = day
-            self.hour = '00'
-            self.minute = '00'
-            self.second = '00'
+        self.year = metadate['year']
+        self.month = metadate['month']
+        self.day = metadate['day']
+        self.hour = metadate['hour']
+        self.minute = metadate['minute']
+        self.second = metadate['second']
 
         self.md5 = file_md5(self.path)
         self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
@@ -206,7 +201,7 @@ class Image(object):
 class Video(object):
 
 
-    def __init__(self, path, year=None, month=None, day=None):
+    def __init__(self, path):
         self.type = 'video'
         self.path = path
         self.name = os.path.basename(self.path)
@@ -223,26 +218,12 @@ class Video(object):
 
         metadate = file_date(self.path, self.meta, video_date_meta)
 
-        if year is None:
-            self.year = metadate['year']
-        else:
-            self.year = year
-        if month is None:
-            self.month = metadate['month']
-        else:
-            self.month = month
-        if day is None:
-            self.day = metadate['day']
-            self.hour = metadate['hour']
-            self.minute = metadate['minute']
-            self.second = metadate['second']
-        else:
-            # if we are overriding the day, the time
-            # is clearly wrong too.
-            self.day = day
-            self.hour = '00'
-            self.minute = '00'
-            self.second = '00'
+        self.year = metadate['year']
+        self.month = metadate['month']
+        self.day = metadate['day']
+        self.hour = metadate['hour']
+        self.minute = metadate['minute']
+        self.second = metadate['second']
 
         self.md5 = file_md5(self.path)
         self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
