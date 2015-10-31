@@ -11,7 +11,7 @@ import photosort as ps
 def check_media(db, indir, files, outroot, verbose=False):
     for f in files:
         mat = re.match('(.*)\.(.*)', f)
-        if not mat:
+        if mat is None:
             continue
         ext = mat.group(2)
         if (ext.lower() not in ps.image_ext) and (ext.lower() not in ps.video_ext):
@@ -37,14 +37,7 @@ def check_media(db, indir, files, outroot, verbose=False):
             result = db.query(obj.uid)
 
             if result is not None:
-                # Uh-oh.  We have a file with the same name
-                # and date as an existing image, but with a
-                # DIFFERENT checksum!
-                outfile = os.path.abspath( os.path.join(daydir, obj.root) ) + '_DUP_' + chk + '.' + obj.ext
-                if os.path.isfile(outfile):
-                    print('{} is a duplicate, and was stored at {}'.format(infile, outfile))
-                else:
-                    print('{} is a duplicate, but does not exist at {}'.format(infile, outfile))
+                raise RuntimeError("file with same name, date and checksum prefix found which is not in DB.  You should rebuild the index.")
         else:
             if verbose:
                 print('found {}'.format(infile))

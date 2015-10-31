@@ -19,17 +19,21 @@ def index_media(db, dir, files):
             print('indexing video {}'.format(infile))
             vid = ps.Video(infile)
             db.insert(vid)
+        else:
+            print('skipping non-media file {}'.format(infile))
 
 
 def import_media(db, indir, files, outroot):
     for f in files:
         mat = re.match('(.*)\.(.*)', f)
-        if not mat:
+        if mat is None:
+            print('skipping non-media file {}'.format(infile))
             continue
         ext = mat.group(2)
-        if (ext.lower() not in ps.image_ext) and (ext.lower() not in ps.video_ext):
-            continue
         infile = os.path.abspath( os.path.join(indir, f) )
+        if (ext.lower() not in ps.image_ext) and (ext.lower() not in ps.video_ext):
+            print('skipping non-media file {}'.format(infile))
+            continue
         album = os.path.basename(indir)
         safename = re.compile(r'[^0-9a-zA-Z-\.\/]')
         album = safename.sub('_', album)
@@ -66,25 +70,7 @@ def import_media(db, indir, files, outroot):
                 print('  adding to DB')
                 db.insert(obj)
             else:
-                # Uh-oh.  We have a file with the same name
-                # and date as an existing image, but with a
-                # DIFFERENT checksum!  Print a warning and
-                # copy it to a new name.
-                print('  WARNING: file with same name and date but different checksum found')
-                print('  WARNING: copying to file name based on checksum to avoid overwrite.')
-                outfile = os.path.abspath( os.path.join(daydir, obj.root) ) + '_DUP_' + chk + '.' + obj.ext
-                if infile != outfile:
-                    print('  copying to {}'.format(outfile))
-                    shutil.copy2(infile, outfile)
-                if obj.type == 'image':
-                    newimg = ps.Image(outfile)
-                    db.insert(newimg)
-                elif obj.type == 'video':
-                    newvid = ps.Video(outfile)
-                    db.insert(newvid)
-                else:
-                    raise RuntimeError("should never get here...")
-
+                raise RuntimeError("file with same name, date and checksum prefix found which is not in DB.  You should rebuild the index.")
         else:
             print('  found in DB')
 

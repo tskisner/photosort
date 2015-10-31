@@ -62,17 +62,54 @@ def file_json(filename):
 
 def file_setdate(filename, date):
     datestr = "{:04d}:{:02d}:{:02d} {:02d}:{:02d}:{:02d}".format(date[0], date[1], date[2], date[3], date[4], date[5])
-    code = sp.check_call ( [ 'exiftool', '-AllDates={}'.format(datestr), '-overwrite_original', filename ] )
     st = time.strptime(datestr, "%Y:%m:%d %H:%M:%S")
     systime = time.mktime(st)
     os.utime(filename, (systime, systime))
     return
 
 
+def file_setmetadate(filename, date):
+    datestr = "{:04d}:{:02d}:{:02d} {:02d}:{:02d}:{:02d}".format(date[0], date[1], date[2], date[3], date[4], date[5])
+    code = sp.check_call ( [ 'exiftool', '-AllDates={}'.format(datestr), '-overwrite_original', filename ] )
+    return
+
+
+def file_ckname(filename, md5):
+    mat = re.match(r'(.*)\.(.*)', filename)
+    if mat is None:
+        raise RuntimeError('file name {} does not have an extension'.format(filename))
+    root = mat.group(1)
+    ext = mat.group(2)
+    ckmat = re.match(r'(.*)_ck([a-z0-9]{4})$', root)
+    full = filename
+    if ckmat is None:
+        full = "{}_ck{}.{}".format(root, md5[0:4], ext)
+    else:
+        origroot = ckmat.group(1)
+        ck = ckmat.group(2)
+        if ck != md5[0:4]:
+            raise RuntimeError('file name {} does not match checksum({})'.format(filename, md5))
+    return full
+
+
+def file_rootname(full):
+    mat = re.match(r'(.*)\.(.*)', full)
+    if mat is None:
+        raise RuntimeError('file name {} does not have an extension'.format(full))
+    root = mat.group(1)
+    ext = mat.group(2)
+    ckmat = re.match(r'(.*)_ck[a-z0-9]{4}$', root)
+    filename = full
+    if ckmat is not None:
+        origroot = ckmat.group(1)
+        filename = "{}.{}".format(origroot, ext)
+    return filename
+
+
 def is_image(filename):
     base = os.path.basename(filename)
     mat = re.match('(.*)\.(.*)', base)
-    if not mat:
+    if mat is None:
         raise RuntimeError('file name {} does not have an extension'.format(filename))
     root = mat.group(1)
     ext = mat.group(2)
@@ -85,7 +122,7 @@ def is_image(filename):
 def is_video(filename):
     base = os.path.basename(filename)
     mat = re.match('(.*)\.(.*)', base)
-    if not mat:
+    if mat is None:
         raise RuntimeError('file name {} does not have an extension'.format(filename))
     root = mat.group(1)
     ext = mat.group(2)
@@ -108,7 +145,7 @@ def file_date(filename, meta, prior):
         if p in meta.keys():
             v = meta[p]
             mat = datepat.match(str(v))
-            if mat:
+            if mat is not None:
                 ret['year'] = mat.group(1)
                 ret['month'] = mat.group(2)
                 ret['day'] = mat.group(3)
@@ -124,7 +161,7 @@ def file_date(filename, meta, prior):
         tstr = str(datetime.datetime.fromtimestamp(t))
         datepat = re.compile(r'^(\d*)-(\d*)-(\d*)\s+(\d*):(\d*):(\d*)\s*')
         mat = datepat.match(tstr)
-        if mat:
+        if mat is not None:
             ret['year'] = mat.group(1)
             ret['month'] = mat.group(2)
             ret['day'] = mat.group(3)
@@ -154,8 +191,8 @@ class Image(object):
     def __init__(self, path):
         self.type = 'image'
         self.path = path
-        self.name = os.path.basename(self.path)
-        mat = re.match('(.*)\.(.*)', self.name)
+        bname = os.path.basename(self.path)
+        mat = re.match('(.*)\.(.*)', bname)
         if not mat:
             raise RuntimeError('file {} does not have an extension'.format(self.path))
         self.root = mat.group(1)
@@ -186,6 +223,8 @@ class Image(object):
         self.second = metadate['second']
 
         self.md5 = file_md5(self.path)
+        rname = file_rootname(bname)
+        self.name = file_ckname(rname, self.md5)
         self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
         #print('Image ctor {}'.format(self.path))
         #print('  name = {}'.format(self.name))
@@ -204,8 +243,8 @@ class Video(object):
     def __init__(self, path):
         self.type = 'video'
         self.path = path
-        self.name = os.path.basename(self.path)
-        mat = re.match('(.*)\.(.*)', self.name)
+        bname = os.path.basename(self.path)
+        mat = re.match('(.*)\.(.*)', bname)
         if not mat:
             raise RuntimeError('file {} does not have an extension'.format(self.path))
         self.root = mat.group(1)
@@ -226,6 +265,8 @@ class Video(object):
         self.second = metadate['second']
 
         self.md5 = file_md5(self.path)
+        rname = file_rootname(bname)
+        self.name = file_ckname(rname, self.md5)
         self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
         #print('Video ctor {}'.format(self.path))
         #print('  name = {}'.format(self.name))
@@ -244,6 +285,15 @@ class Video(object):
 if __name__ == "__main__":
 
     path = sys.argv[1]
-    #img = Image(path)
-    vid = Video(path)
-
+    img = Image(path)
+    #vid = Video(path)
+    print(img.path)
+    print(img.md5)
+    full = file_ckname(img.path, img.md5)
+    print(full)
+    full2 = file_ckname(full, img.md5)
+    print(full2)
+    stripped = file_rootname(full2)
+    print(stripped)
+    stripped2 = file_rootname(stripped)
+    print(stripped2)

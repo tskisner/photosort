@@ -19,7 +19,7 @@ def main():
     year = 0
     month = 0
     day = 0
-    if mat:
+    if mat is not None:
         year = int(mat.group(1))
         month = int(mat.group(2))
         day = int(mat.group(3))
@@ -27,6 +27,7 @@ def main():
         raise RuntimeError("input date argument in wrong format")
 
     for f in args.files:
+        ps.file_setmetadate(f, (year, month, day, 0, 0, 0))
         ps.file_setdate(f, (year, month, day, 0, 0, 0))
 
 
