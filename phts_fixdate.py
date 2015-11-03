@@ -20,15 +20,15 @@ def main():
     month = 0
     day = 0
     if mat is not None:
-        year = int(mat.group(1))
-        month = int(mat.group(2))
-        day = int(mat.group(3))
+        year = mat.group(1)
+        month = mat.group(2)
+        day = mat.group(3)
     else:
         raise RuntimeError("input date argument in wrong format")
 
     for f in args.files:
-        ps.file_setmetadate(f, (year, month, day, 0, 0, 0))
-        ps.file_setdate(f, (year, month, day, 0, 0, 0))
+        ps.file_setmetadate(f, (year, month, day, '00', '00', '00'))
+        ps.file_setdate(f, (year, month, day, '00', '00', '00'))
 
 
 if __name__ == "__main__":

@@ -61,7 +61,7 @@ def file_json(filename):
 
 
 def file_setdate(filename, date):
-    datestr = "{:04d}:{:02d}:{:02d} {:02d}:{:02d}:{:02d}".format(date[0], date[1], date[2], date[3], date[4], date[5])
+    datestr = "{:04d}:{:02d}:{:02d} {:02d}:{:02d}:{:02d}".format(int(date[0]), int(date[1]), int(date[2]), int(date[3]), int(date[4]), int(date[5]))
     st = time.strptime(datestr, "%Y:%m:%d %H:%M:%S")
     systime = time.mktime(st)
     os.utime(filename, (systime, systime))
@@ -69,9 +69,28 @@ def file_setdate(filename, date):
 
 
 def file_setmetadate(filename, date):
-    datestr = "{:04d}:{:02d}:{:02d} {:02d}:{:02d}:{:02d}".format(date[0], date[1], date[2], date[3], date[4], date[5])
-    code = sp.check_call ( [ 'exiftool', '-AllDates={}'.format(datestr), '-overwrite_original', filename ] )
+    comstr = "File dates corrected by photosort on {}".format(datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S'))
+    datestr = "{:04d}:{:02d}:{:02d} {:02d}:{:02d}:{:02d}".format(int(date[0]), int(date[1]), int(date[2]), int(date[3]), int(date[4]), int(date[5]))
+    code = sp.check_call ( [ 'exiftool', '-AllDates={}'.format(datestr), '-overwrite_original', '-comment={}'.format(comstr), filename ] )
     return
+
+
+def good_date(date):
+    iyear = int(date[0])
+    imonth = int(date[1])
+    iday = int(date[2])
+    now = datetime.datetime.now()
+    nowyear = int(datetime.datetime.strftime(now, '%Y'))
+    # does the year make sense?
+    if iyear == 0:
+        return False
+    if iyear > nowyear:
+        return False
+    if (imonth < 1) or (imonth > 12):
+        return False
+    if (iday < 1) or (iday > 31):
+        return False
+    return True
 
 
 def file_ckname(filename, md5):
