@@ -193,15 +193,24 @@ def file_date(filename, meta, prior):
 
 
 def album_append(root, album, files):
-    albumdir = os.path.join(root, 'albums', album)
+    absroot = os.path.abspath(root)
+    albumdir = os.path.join(absroot, 'albums', album)
     if not os.path.isdir(albumdir):
         os.mkdir(albumdir)
     for f in files:
-        filename = os.path.basename(os.path.abspath(f))
-        linkpath = os.path.join(albumdir, filename)
-        if not os.path.islink(linkpath):
-            #print("link {} --> {}".format(linkpath, f))
-            os.symlink(f, linkpath)
+        absfile = os.path.abspath(f)
+        filename = os.path.basename(absfile)
+        # we want the path relative to root...
+        rootpat = re.compile(r"{}(.*)".format(absroot))
+        mat = rootpat.match(absfile)
+        if mat is not None:
+            relfile = os.path.join('../..', mat.group(1))
+            linkpath = os.path.join(albumdir, filename)
+            if not os.path.islink(linkpath):
+                #print("link {} --> {}".format(linkpath, f))
+                os.symlink(filename, linkpath)
+        else:
+            raise RuntimeError("file {} is not in photo directory {}".format(absfile, absroot))
     return
 
 
