@@ -1,0 +1,49 @@
+
+import os
+import sys
+import shutil
+import re
+import argparse
+
+import photosort as ps
+
+
+def get_info(file):
+    if ps.is_image(file):
+        obj = ps.Image(file)
+    elif ps.is_video(file):
+        obj = ps.Video(file)
+    else:
+        print('{} not a media file'.format(file))
+
+    absfile = os.path.abspath(file)
+
+    year = int(obj.year)
+    month = int(obj.month)
+    day = int(obj.day)
+    hour = int(obj.hour)
+    minute = int(obj.minute)
+    second = int(obj.second)
+
+    print("{}:".format(absfile))
+    print("  Name = {}".format(obj.name))
+    print("  MD5 = {}".format(obj.md5))
+    print("  UID = {}".format(obj.uid))
+    print("  Created {:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(year, month, day, hour, minute, second))
+
+    return
+
+
+def main():
+    parser = argparse.ArgumentParser( description='Query information about individual media files.' )
+    parser.add_argument('files', nargs='*')
+    args = parser.parse_args()
+
+    for f in args.files:
+        get_info(f)
+
+
+
+if __name__ == "__main__":
+    main()
+

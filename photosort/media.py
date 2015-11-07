@@ -174,21 +174,15 @@ def file_date(filename, meta, prior):
                 #print("file_date:  using key {}".format(p))
                 break
     if ret['year'] is None:
-        # We have no metadata date information.  Just use the file
-        # modification time (not ideal).
-        t = os.path.getmtime(filename)
-        tstr = str(datetime.datetime.fromtimestamp(t))
-        datepat = re.compile(r'^(\d*)-(\d*)-(\d*)\s+(\d*):(\d*):(\d*)\s*')
-        mat = datepat.match(tstr)
-        if mat is not None:
-            ret['year'] = mat.group(1)
-            ret['month'] = mat.group(2)
-            ret['day'] = mat.group(3)
-            ret['hour'] = mat.group(4)
-            ret['minute'] = mat.group(5)
-            ret['second'] = str(int(float(mat.group(6))))
-        else:
-            raise RuntimeError('cannot get date/time from metadata or filesystem for {}', filename)
+        # We have no metadata date information.  Since timestamps
+        # are completely unreliable, we set this file time to all zero,
+        # so that it will be flagged as "broken" for manual intervention.
+        ret['year'] = '0000'
+        ret['month'] = '00'
+        ret['day'] = '00'
+        ret['hour'] = '00'
+        ret['minute'] = '00'
+        ret['second'] = '00'
     return ret
 
 
@@ -226,17 +220,7 @@ class Image(object):
         self.root = mat.group(1)
         self.ext = mat.group(2)
 
-        if self.ext.lower() in image_raw_ext:
-            # We have a raw file.  Extract the embedded image
-            # and use this to grab the EXIF tags.
-            tempname = ''
-            with tempfile.NamedTemporaryFile(delete=False) as temp:
-                tempname = temp.name
-                proc_dcraw = sp.Popen ( [ 'dcraw', '-c', '-e', self.path ], stdout=temp, stderr=None, stdin=None )
-                proc_dcraw.wait()
-            self.meta = file_json(tempname)
-            os.unlink(tempname)
-        elif self.ext.lower() in image_nonraw_ext:
+        if (self.ext.lower() in image_raw_ext) or (self.ext.lower() in image_nonraw_ext):
             self.meta = file_json(self.path)
         else:
             raise RuntimeError('file {} is not an image'.format(self.path))
