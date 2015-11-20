@@ -24,7 +24,7 @@ def index_media(db, dir, files):
     return
 
 
-def import_media(db, indir, files, outroot, mkalbums):
+def import_media(db, indir, files, outroot, albumdir):
     for f in files:
         mat = re.match('(.*)\.(.*)', f)
         if mat is None:
@@ -86,12 +86,12 @@ def import_media(db, indir, files, outroot, mkalbums):
                     # time to reflect that.
                     if dategood:
                         ps.file_setdate(outfile, date)
-                if mkalbums:
+                if albumdir is not None:
                     # if we are making albums, take the parent directory and make it the album name
                     album = os.path.basename(indir)
                     safename = re.compile(r'[^0-9a-zA-Z-\.\/]')
                     album = safename.sub('_', album)
-                    ps.album_append(outroot, album, [outfile])
+                    ps.album_append(albumdir, album, [outfile])
                 print('  adding to DB')
                 db.insert(obj)
             else:
@@ -105,7 +105,7 @@ def main():
     parser = argparse.ArgumentParser( description='Organize photos and videos by metadata.' )
     parser.add_argument( '--indir', required=False, default='', help='input directory' )
     parser.add_argument( '--outdir', required=True, default='', help='output directory' )
-    parser.add_argument( '--albums', required=False, default=False, action='store_true', help='create new albums based on input directories' )
+    parser.add_argument( '--albumdir', required=False, default=None, help='create new albums based on input directories and write to this directory' )
     parser.add_argument( '--reindex', required=False, default=False, action='store_true', help='force rebuild of index' )
     args = parser.parse_args()
 
@@ -117,9 +117,11 @@ def main():
     if not os.path.isdir(outdir):
         os.mkdir(outdir)
 
-    albumdir = os.path.join(outdir, 'albums')
-    if not os.path.isdir(albumdir):
-        os.mkdir(albumdir)
+    if args.albumdir is not None:
+        if ps.is_subdir(args.albumdir, outdir):
+            raise RuntimeError("album directory must not be within the output directory")
+        if not os.path.isdir(args.albumdir):
+            os.mkdir(args.albumdir)
 
     brokendir = os.path.join(outdir, 'broken')
     if not os.path.isdir(brokendir):
@@ -133,14 +135,13 @@ def main():
 
     if args.reindex:
         exclude = []
-        exclude.append('albums')
         for root, dirs, files in os.walk(outdir, topdown=True):
             dirs[:] = [d for d in dirs if d not in exclude]
             index_media(db, root, files)
 
     if args.indir != '':
         for root, dirs, files in os.walk(indir):
-            import_media(db, root, files, outdir, args.albums)
+            import_media(db, root, files, outdir, args.albumdir)
 
 
 

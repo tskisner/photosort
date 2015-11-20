@@ -30,7 +30,7 @@ setup (
     author_email = 'mail@theodorekisner.com',
     url = 'https://github.com/tskisner/photosort',
     packages = [ 'photosort' ],
-    scripts = [ 'phts_sync', 'phts_dirmd5', 'phts_album', 'phts_verify', 'phts_fixdate', 'phts_info' ],
+    scripts = [ 'phts_sync', 'phts_dirmd5', 'phts_album', 'phts_verify', 'phts_fixdate', 'phts_info', 'phts_export' ],
     license = 'None',
     requires = ['Python (>3.3.0)', ]
 )

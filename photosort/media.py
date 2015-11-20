@@ -7,6 +7,7 @@ import json
 import tempfile
 import datetime
 import time
+import shutil
 
 import hashlib
 
@@ -186,10 +187,18 @@ def file_date(filename, meta, prior):
     return ret
 
 
-def album_append(root, album, files):
-    absroot = os.path.abspath(root)
-    #print("absroot = {}".format(absroot))
-    albumdir = os.path.join(absroot, 'albums', album)
+def is_subdir(path, directory):
+    path = os.path.realpath(path)
+    directory = os.path.realpath(directory)
+    relative = os.path.relpath(path, directory)
+    if relative.startswith(os.pardir):
+        return False
+    else:
+        return True
+
+
+def album_append(adir, album, files):
+    albumdir = os.path.join(os.path.abspath(adir), album)
     #print("albumdir = {}".format(albumdir))
     if not os.path.isdir(albumdir):
         os.mkdir(albumdir)
@@ -248,6 +257,50 @@ class Image(object):
         #for k, v in self.meta.items():
         #    print ('    {} = {}'.format(k, v))
 
+    def export(self, path, resolution='FULL'):
+        qual_opts = ['-quality', '95']
+        res_opts = []
+        if resolution == 'MED':
+            res_opts.append('-scale')
+            res_opts.append('50%')
+        elif resolution == 'LOW':
+            res_opts.append('-scale')
+            res_opts.append('25%')
+        com_meta = ['exiftool', '-q', '-overwrite_original', '-TagsFromFile', self.path, path]
+
+        if self.ext.lower() in image_raw_ext:
+            # We have a raw file.  Extract with dcraw and 
+            # pipe to convert.  Resize before JPEG conversion.
+            # Then copy metadata with exiftool.
+            com_convert = ['convert']
+            com_convert.extend(res_opts)
+            com_convert.extend(qual_opts)
+            com_convert.append('pnm:-')
+            com_convert.append(path)
+            proc_dcraw = sp.Popen([ 'dcraw', '-c', self.path ], stdout=sp.PIPE, stderr=None, stdin=None)
+            proc_convert = sp.Popen(com_convert, stdin=proc_dcraw.stdout, stdout=None, stderr=None)
+            output = proc_convert.communicate()[0]
+            proc_convert.wait()
+            proc_meta = sp.Popen(com_meta, stdout=None, stderr=None, stdin=None)
+            proc_meta.wait()
+
+        else:
+            if (resolution == 'FULL') and (self.ext.lower() == 'jpg'):
+                # copy to output
+                shutil.copy2(self.path, path)
+            else:
+                # Just use convert directly, then copy
+                # metadata with exiftool.
+                com = ['convert']
+                com.extend(res_opts)
+                com.extend(qual_opts)
+                com.append(self.path)
+                com.append(path)
+                proc_export = sp.Popen(com, stdout=None, stderr=None, stdin=None)
+                proc_export.wait()
+                proc_meta = sp.Popen(com_meta, stdout=None, stderr=None, stdin=None)
+                proc_meta.wait()
+
 
 class Video(object):
 
@@ -290,7 +343,8 @@ class Video(object):
         #for k, v in self.meta.items():
         #    print ('    {} = {}'.format(k, v))
 
-
+    def export(self, path, resolution='FULL'):
+        pass
 
 
 

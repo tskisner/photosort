@@ -8,26 +8,14 @@ import argparse
 import photosort as ps
 
 
-def find_top_dir():
-    cursor = os.path.getcwd()
-    while os.path.dirname(cursor) != '/':
-        test = os.path.join(cursor, 'albums')
-        if os.path.isdir(test):
-            return cursor
-        cursor = os.path.dirname(cursor)
-    raise RuntimeError("working directory is not within an image tree")
-    return ""
-
-
 def main():
     parser = argparse.ArgumentParser( description='Create albums with symbolic links.' )
+    parser.add_argument( '--albumdir', required=True, help='album directory' )
     parser.add_argument( '--album', required=True, help='album name' )
     parser.add_argument('files', nargs='*')
     args = parser.parse_args()
-
-    topdir = find_top_dir()
     
-    ps.album_append(topdir, args.album, args.files)
+    ps.album_append(args.albumdir, args.album, args.files)
 
 
 if __name__ == "__main__":
