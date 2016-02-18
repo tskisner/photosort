@@ -224,7 +224,7 @@ class Image(object):
         self.path = path
         bname = os.path.basename(self.path)
         mat = re.match('(.*)\.(.*)', bname)
-        if not mat:
+        if mat is None:
             raise RuntimeError('file {} does not have an extension'.format(self.path))
         self.root = mat.group(1)
         self.ext = mat.group(2)
@@ -310,7 +310,7 @@ class Video(object):
         self.path = path
         bname = os.path.basename(self.path)
         mat = re.match('(.*)\.(.*)', bname)
-        if not mat:
+        if mat is None:
             raise RuntimeError('file {} does not have an extension'.format(self.path))
         self.root = mat.group(1)
         self.ext = mat.group(2)

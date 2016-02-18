@@ -8,7 +8,7 @@ import argparse
 import photosort as ps
 
 
-def check_media(db, indir, files, outroot, verbose=False):
+def check_media(db, indir, files, outroot, missing, verbose=False):
     for f in files:
         mat = re.match('(.*)\.(.*)', f)
         if mat is None:
@@ -29,6 +29,7 @@ def check_media(db, indir, files, outroot, verbose=False):
             else:
                 raise RuntimeError("Should never get here...")
             print('{} not in DB'.format(infile))
+            missing += os.stat(infile).st_size
 
             yeardir = os.path.join(outroot, obj.year)
             monthdir = os.path.join(yeardir, obj.month)
@@ -65,9 +66,13 @@ def main():
 
     db = ps.DB(index)
 
+    missing_bytes = 0
     for root, dirs, files in os.walk(indir):
-        check_media(db, root, files, outdir, verbose=args.verbose)
+        check_media(db, root, files, outdir, missing_bytes, verbose=args.verbose)
 
+    print("Input directory {}".format(indir))
+    print("  has {:.2f}MB of new media not found in:".format(float(missing_bytes)/1.0e6))
+    print("Output directory {}".format(outdir))
 
 
 if __name__ == "__main__":
