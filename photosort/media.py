@@ -152,7 +152,7 @@ def is_video(filename):
         return False
 
 
-def file_date(filename, meta, prior):
+def file_date(filename, meta, prior, file_time=False):
     ret = {}
     ret['year'] = None
     ret['month'] = None
@@ -184,6 +184,19 @@ def file_date(filename, meta, prior):
         ret['hour'] = '00'
         ret['minute'] = '00'
         ret['second'] = '00'
+        if file_time:
+            # We explicity want to use the file date stamp...
+            t = os.path.getmtime(filename)
+            tstr = str(datetime.datetime.fromtimestamp(t))
+            datepat = re.compile(r'^(\d*)-(\d*)-(\d*)\s+(\d*):(\d*):(\d*)\s*')
+            datemat = datepat.match(tstr)
+            if datemat:
+                ret['year'] = datemat.group(1)
+                ret['month'] = datemat.group(2)
+                ret['day'] = datemat.group(3)
+                ret['hour'] = datemat.group(4)
+                ret['minute'] = datemat.group(5)
+                ret['second'] = str(int(float(datemat.group(6))))
     return ret
 
 
@@ -219,7 +232,7 @@ def album_append(adir, album, files):
 
 class Image(object):
 
-    def __init__(self, path):
+    def __init__(self, path, file_time=False):
         self.type = 'image'
         self.path = path
         bname = os.path.basename(self.path)
@@ -234,7 +247,7 @@ class Image(object):
         else:
             raise RuntimeError('file {} is not an image'.format(self.path))
 
-        metadate = file_date(self.path, self.meta, image_date_meta)
+        metadate = file_date(self.path, self.meta, image_date_meta, file_time=file_time)
 
         self.year = metadate['year']
         self.month = metadate['month']
@@ -304,8 +317,7 @@ class Image(object):
 
 class Video(object):
 
-
-    def __init__(self, path):
+    def __init__(self, path, file_time=False):
         self.type = 'video'
         self.path = path
         bname = os.path.basename(self.path)
@@ -320,7 +332,7 @@ class Video(object):
         else:
             raise RuntimeError('file {} is not a video'.format(self.path))
 
-        metadate = file_date(self.path, self.meta, video_date_meta)
+        metadate = file_date(self.path, self.meta, video_date_meta, file_time=file_time)
 
         self.year = metadate['year']
         self.month = metadate['month']
