@@ -19,6 +19,10 @@ def check_media(db, indir, files, outroot, missing, verbose=False):
         infile = os.path.abspath( os.path.join(indir, f) )
 
         chk = ps.file_md5(infile)
+        rname, chkshort = ps.file_rootname(infile)
+
+        if (chkshort != "") and (chkshort != chk[0:4]):
+            print('{} has short checksum {} (not {}) and may be corrupted'.format(infile, chk[0:4], chkshort))
 
         if (not db.query_md5(chk)):
             obj = None
@@ -42,37 +46,42 @@ def check_media(db, indir, files, outroot, missing, verbose=False):
         else:
             if verbose:
                 print('found {}'.format(infile))
-    return
+    return missing
 
 
 def main():
     parser = argparse.ArgumentParser( description='Verify photos and videos by metadata.' )
-    parser.add_argument( '--original', required=False, default='', help='original input directory' )
-    parser.add_argument( '--outdir', required=True, default='', help='output directory' )
+    parser.add_argument( '--indir', required=False, default=None, help='original input directory' )
+    parser.add_argument( '--outdir', required=True, default=None, help='output directory' )
     parser.add_argument( '--verbose', required=False, default=False, action='store_true', help='verbose output' )
 
     args = parser.parse_args()
 
-    indir = os.path.abspath(args.original)
     outdir = os.path.abspath(args.outdir)
-
-    index = os.path.join(outdir, 'photosync.db')
-
-    if not os.path.isdir(indir):
-        raise RuntimeError('original directory does not exist')
 
     if not os.path.isdir(outdir):
         raise RuntimeError('output directory does not exist')
 
+    index = os.path.join(outdir, 'photosync.db')
+
     db = ps.DB(index)
 
-    missing_bytes = 0
-    for root, dirs, files in os.walk(indir):
-        check_media(db, root, files, outdir, missing_bytes, verbose=args.verbose)
+    if args.indir is not None:
+        indir = os.path.abspath(args.indir)
+        if not os.path.isdir(indir):
+            raise RuntimeError('input directory does not exist')
+        missing_bytes = 0
+        for root, dirs, files in os.walk(indir):
+            missing_bytes = check_media(db, root, files, outdir, missing_bytes, verbose=args.verbose)
+        print("Input directory {}".format(indir))
+        print("  has {:.2f}MB of new media not found in:".format(float(missing_bytes)/1.0e6))
+        print("Output directory {}".format(outdir))
 
-    print("Input directory {}".format(indir))
-    print("  has {:.2f}MB of new media not found in:".format(float(missing_bytes)/1.0e6))
-    print("Output directory {}".format(outdir))
+    missing_bytes = 0
+    for root, dirs, files in os.walk(outdir):
+        missing_bytes = check_media(db, root, files, outdir, missing_bytes, verbose=args.verbose)
+        print("Output directory {}".format(outdir))
+        print("  has {:.2f}MB of new media not found in database".format(float(missing_bytes)/1.0e6))
 
 
 if __name__ == "__main__":

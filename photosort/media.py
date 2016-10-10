@@ -118,12 +118,14 @@ def file_rootname(full):
         raise RuntimeError('file name {} does not have an extension'.format(full))
     root = mat.group(1)
     ext = mat.group(2)
-    ckmat = re.match(r'(.*)_ck[a-z0-9]{4}$', root)
+    ckmat = re.match(r'(.*)_ck([a-z0-9]{4})$', root)
     filename = full
+    ckshort = ""
     if ckmat is not None:
         origroot = ckmat.group(1)
         filename = "{}.{}".format(origroot, ext)
-    return filename
+        ckshort = ckmat.group(2)
+    return filename, ckshort
 
 
 def is_image(filename):
@@ -257,7 +259,7 @@ class Image(object):
         self.second = metadate['second']
 
         self.md5 = file_md5(self.path)
-        rname = file_rootname(bname)
+        rname, ckshort = file_rootname(bname)
         self.name = file_ckname(rname, self.md5)
         self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
         #print('Image ctor {}'.format(self.path))
@@ -342,7 +344,7 @@ class Video(object):
         self.second = metadate['second']
 
         self.md5 = file_md5(self.path)
-        rname = file_rootname(bname)
+        rname, ckshort = file_rootname(bname)
         self.name = file_ckname(rname, self.md5)
         self.uid = '{}{}{}:{}{}{}:{}'.format(self.year, self.month, self.day, self.hour, self.minute, self.second, self.name)
         #print('Video ctor {}'.format(self.path))
@@ -371,7 +373,7 @@ if __name__ == "__main__":
     print(full)
     full2 = file_ckname(full, img.md5)
     print(full2)
-    stripped = file_rootname(full2)
+    stripped, ckshort = file_rootname(full2)
     print(stripped)
-    stripped2 = file_rootname(stripped)
+    stripped2, ckshort = file_rootname(stripped)
     print(stripped2)

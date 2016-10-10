@@ -33,7 +33,7 @@ def main():
         else:
             raise RuntimeError("file {} is not a recognized media type".format(f))
 
-        outname = ps.file_rootname(obj.name)
+        outname, ckshort = ps.file_rootname(obj.name)
         mat = re.match('(.*)\..*', outname)
         root = mat.group(1)
         outpath = os.path.join(args.out, "{}.jpg".format(root))
