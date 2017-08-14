@@ -80,7 +80,7 @@ def main():
     missing_bytes = 0
     for root, dirs, files in os.walk(outdir):
         missing_bytes = check_media(db, root, files, outdir, missing_bytes, verbose=args.verbose)
-        print("Output directory {}".format(outdir))
+        print("Output directory {}".format(root))
         print("  has {:.2f}MB of new media not found in database".format(float(missing_bytes)/1.0e6))
 
 
