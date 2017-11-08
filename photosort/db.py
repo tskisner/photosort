@@ -1,4 +1,7 @@
 
+from __future__ import (absolute_import, division, print_function,
+    unicode_literals)
+
 import os
 import sys
 
@@ -20,11 +23,16 @@ class DB(object):
         if ( mode == 'r' ) and ( create ):
             raise RuntimeError("cannot open a non-existent DB in read-only mode")
 
-        if (mode == 'r'):
-            self.connstr = 'file:{}?mode=ro'.format(self.path)
-        else:
-            self.connstr = 'file:{}?mode=rwc'.format(self.path)
-        self.conn = sqlite3.connect(self.connstr, uri=True)
+        self.conn = None
+        try:
+            # only python3 supports uri option
+            if (mode == 'r'):
+                self.connstr = 'file:{}?mode=ro'.format(self.path)
+            else:
+                self.connstr = 'file:{}?mode=rwc'.format(self.path)
+            self.conn = sqlite3.connect(self.connstr, uri=True)
+        except:
+            self.conn = sqlite3.connect(self.path)
 
         if create:
             self._init_schema()

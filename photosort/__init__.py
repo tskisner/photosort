@@ -1,10 +1,12 @@
 
-'''
+"""
 photosort
 ==============
 
 Tools for reading directories of images and sorting by date or exif information.
-'''
+"""
+from __future__ import (absolute_import, division, print_function,
+    unicode_literals)
 
 from ._version import __version__
 
