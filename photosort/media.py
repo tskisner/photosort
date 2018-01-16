@@ -22,7 +22,7 @@ image_nonraw_ext = [
 image_raw_ext = [
     '3fr', 'ari',
     'arw', 'bay', 'crw', 'cr2', 'cap', 'dcs',
-    'dcr', 'dng', 'drf', 'eip', 'erf', 'fff', 
+    'dcr', 'dng', 'drf', 'eip', 'erf', 'fff',
     'iiq', 'k25', 'kdc', 'mdc', 'mef', 'mos',
     'mrw', 'nef', 'nrw', 'obm', 'orf', 'pef',
     'ptx', 'pxn', 'r3d', 'raf', 'raw', 'rwl',
@@ -68,7 +68,7 @@ def file_setdate(filename, date):
     datestr = "{:04d}:{:02d}:{:02d} {:02d}:{:02d}:{:02d}".format(int(date[0]), int(date[1]), int(date[2]), int(date[3]), int(date[4]), int(date[5]))
     st = time.strptime(datestr, "%Y:%m:%d %H:%M:%S")
     systime = time.mktime(st)
-    os.utime(filename, (systime, systime))
+    os.utime(filename, times=(systime, systime))
     return
 
 
@@ -215,26 +215,6 @@ def is_subdir(path, directory):
         return True
 
 
-def album_append(adir, album, files):
-    albumdir = os.path.join(os.path.abspath(adir), album)
-    #print("albumdir = {}".format(albumdir))
-    if not os.path.isdir(albumdir):
-        os.mkdir(albumdir)
-    for f in files:
-        absfile = os.path.abspath(f)
-        filename = os.path.basename(absfile)
-        #print("absfile = {}".format(absfile))
-        #print("filename = {}".format(filename))
-        # we want the path relative to root...
-        relfile = os.path.relpath(absfile, albumdir)
-        #print("relfile = {}".format(relfile))
-        linkpath = os.path.join(albumdir, filename)
-        #print("linkpath = {}".format(linkpath))
-        if not os.path.islink(linkpath):
-            os.symlink(relfile, linkpath)
-    return
-
-
 class Image(object):
 
     def __init__(self, path, file_time=False):
@@ -287,7 +267,7 @@ class Image(object):
         com_meta = ['exiftool', '-q', '-overwrite_original', '-TagsFromFile', self.path, path]
 
         if self.ext.lower() in image_raw_ext:
-            # We have a raw file.  Extract with dcraw and 
+            # We have a raw file.  Extract with dcraw and
             # pipe to convert.  Resize before JPEG conversion.
             # Then copy metadata with exiftool.
             com_convert = ['convert']
