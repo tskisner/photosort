@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 from __future__ import (absolute_import, division, print_function,
     unicode_literals)
@@ -12,38 +13,46 @@ import photosort as ps
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Verify photos and videos by metadata.' )
-    parser.add_argument( '--indir', required=False, default=None, help='original input directory' )
-    parser.add_argument( '--outdir', required=True, default=None, help='output directory' )
-    parser.add_argument( '--verbose', required=False, default=False, action='store_true', help='verbose output' )
+    parser = argparse.ArgumentParser(\
+        description="Verify photos and videos by metadata." )
+    parser.add_argument( "--indir", required=False, default=None,
+        help="original input directory" )
+    parser.add_argument( "--outdir", required=True, default=None,
+        help="output directory" )
+    parser.add_argument( "--verbose", required=False, default=False,
+        action="store_true", help="verbose output" )
 
     args = parser.parse_args()
 
     outdir = os.path.abspath(args.outdir)
 
     if not os.path.isdir(outdir):
-        raise RuntimeError('output directory does not exist')
+        raise RuntimeError("output directory does not exist")
 
-    index = os.path.join(outdir, 'photosync.db')
+    index = os.path.join(outdir, "photosync.db")
 
     db = ps.DB(index)
 
     if args.indir is not None:
         indir = os.path.abspath(args.indir)
         if not os.path.isdir(indir):
-            raise RuntimeError('input directory does not exist')
+            raise RuntimeError("input directory does not exist")
         missing_bytes = 0
         for root, dirs, files in os.walk(indir):
-            missing_bytes = ps.check_media(db, root, files, outdir, missing_bytes, verbose=args.verbose)
+            missing_bytes = ps.check_media(db, root, files, outdir,
+                missing_bytes, verbose=args.verbose)
         print("Input directory {}".format(indir))
-        print("  has {:.2f}MB of new media not found in:".format(float(missing_bytes)/1.0e6))
+        print("  has {:.2f}MB of new media not found in:"\
+            .format(float(missing_bytes)/1.0e6))
         print("Output directory {}".format(outdir))
 
     missing_bytes = 0
     for root, dirs, files in os.walk(outdir):
-        missing_bytes = ps.check_media(db, root, files, outdir, missing_bytes, verbose=args.verbose)
+        missing_bytes = ps.check_media(db, root, files, outdir, missing_bytes,
+            verbose=args.verbose)
         print("Output directory {}".format(root))
-        print("  has {:.2f}MB of new media not found in database".format(float(missing_bytes)/1.0e6))
+        print("  has {:.2f}MB of new media not found in database"\
+            .format(float(missing_bytes)/1.0e6))
 
 
 if __name__ == "__main__":

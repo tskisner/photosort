@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 from __future__ import (absolute_import, division, print_function,
     unicode_literals)
@@ -12,29 +13,38 @@ import photosort as ps
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Organize photos and videos by metadata.' )
-    parser.add_argument( '--indir', required=False, default='', help='input directory' )
-    parser.add_argument( '--outdir', required=True, default='', help='output directory' )
-    parser.add_argument( '--albumdir', required=False, default=None, help='create new albums based on input directories and write to this directory' )
-    parser.add_argument( '--reindex', required=False, default=False, action='store_true', help='force rebuild of index' )
-    parser.add_argument( '--usefiletime', required=False, default=False, action='store_true', help='if EXIF information is missing, use the file timestamp' )
+    parser = argparse.ArgumentParser(\
+        description="Organize photos and videos by metadata." )
+    parser.add_argument( "--indir", required=False, default="",
+        help="input directory" )
+    parser.add_argument( "--outdir", required=True, default="",
+        help="output directory" )
+    parser.add_argument( "--albumdir", required=False, default=None,
+        help="create new albums based on input directories and write "
+        "to this directory" )
+    parser.add_argument( "--reindex", required=False, default=False,
+        action="store_true", help="force rebuild of index" )
+    parser.add_argument( "--usefiletime", required=False, default=False,
+        action="store_true",
+        help="if EXIF information is missing, use the file timestamp" )
     args = parser.parse_args()
 
     indir = os.path.abspath(args.indir)
     outdir = os.path.abspath(args.outdir)
 
-    index = os.path.join(outdir, 'photosync.db')
+    index = os.path.join(outdir, "photosync.db")
 
     if not os.path.isdir(outdir):
         os.mkdir(outdir)
 
     if args.albumdir is not None:
         if ps.is_subdir(args.albumdir, outdir):
-            raise RuntimeError("album directory must not be within the output directory")
+            raise RuntimeError(\
+                "album directory must not be within the output directory")
         if not os.path.isdir(args.albumdir):
             os.mkdir(args.albumdir)
 
-    brokendir = os.path.join(outdir, 'broken')
+    brokendir = os.path.join(outdir, "broken")
     if not os.path.isdir(brokendir):
         os.mkdir(brokendir)
 
@@ -50,9 +60,10 @@ def main():
             dirs[:] = [d for d in dirs if d not in exclude]
             ps.index_media(db, root, files, args.usefiletime)
 
-    if args.indir != '':
+    if args.indir != "":
         for root, dirs, files in os.walk(indir):
-            ps.import_media(db, root, files, outdir, args.albumdir, args.usefiletime)
+            ps.import_media(db, root, files, outdir, args.albumdir,
+                args.usefiletime)
 
 
 

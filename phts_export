@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 from __future__ import (absolute_import, division, print_function,
     unicode_literals)
@@ -12,12 +13,14 @@ import photosort as ps
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Export photos with optional resizing.' )
-    parser.add_argument( '--out', required=True, help='output directory' )
-    parser.add_argument( '--res', required=False, default='FULL', help='output resolution ("FULL", "MED", "LOW")' )
+    parser = argparse.ArgumentParser(\
+        description="Export photos with optional resizing." )
+    parser.add_argument( "--out", required=True, help="output directory" )
+    parser.add_argument( "--res", required=False, default="FULL",
+        help="output resolution ("FULL", "MED", "LOW")" )
 
-    
-    parser.add_argument('files', nargs='*')
+
+    parser.add_argument("files", nargs="*")
     args = parser.parse_args()
 
     if not os.path.isdir(args.out):
@@ -29,15 +32,16 @@ def main():
         outext = None
         if ps.is_image(f):
             obj = ps.Image(f)
-            outext = 'jpg'
+            outext = "jpg"
         elif ps.is_video(f):
             obj = ps.Video(f)
-            outext = 'mp4'
+            outext = "mp4"
         else:
-            raise RuntimeError("file {} is not a recognized media type".format(f))
+            raise RuntimeError(\
+                "file {} is not a recognized media type".format(f))
 
         outname, ckshort = ps.file_rootname(obj.name)
-        mat = re.match('(.*)\..*', outname)
+        mat = re.match("(.*)\..*", outname)
         root = mat.group(1)
         outpath = os.path.join(args.out, "{}.jpg".format(root))
 
@@ -48,4 +52,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
