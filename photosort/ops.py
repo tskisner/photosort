@@ -6,10 +6,12 @@ import os
 import re
 import shutil
 
+import subprocess as sp
+
 from .media import (Image, Video, image_raw_ext, image_nonraw_ext,
     image_ext, video_ext, file_md5, file_setdate, file_json,
     is_image, is_video, file_date, good_date, file_rootname,
-    file_ckname, is_subdir, file_setmetadate)
+    file_ckname, is_subdir, file_setmetadate, file_format)
 
 
 def album_append(adir, album, files):
@@ -179,4 +181,41 @@ def check_media(db, indir, files, outroot, missing, verbose=False):
 
 
 def convert_video(infile, outfile):
-    pass
+    if not is_video(infile):
+        raise RuntimeError("cannot convert non-video file {}".format(infile))
+    invid = Video(infile)
+    # get the date as a tuple
+    date = (invid.year, invid.month, invid.day, invid.hour,
+        invid.minute, invid.second)
+
+    inbase, informat = file_format(infile)
+    outbase, outformat = file_format(outfile)
+    if (informat == "avi") or (informat == "mov"):
+        if outformat == "m4v":
+            # We know what to do...
+            com = ["ffmpeg", "-y", "-i", infile, "-c:v", "libx264", "-pix_fmt",
+                "yuv420p", "-preset:v", "slow", "-profile:v", "baseline",
+                "-crf", "23", outfile]
+            code = sp.check_call(com)
+            file_setmetadate(outfile, date)
+            file_setdate(outfile, date)
+        else:
+            raise NotImplementedError("Cannot convert '{}' videos to '{}'"\
+                .format(informat, outformat))
+    else:
+        raise NotImplementedError("Cannot convert '{}' videos to '{}'"\
+            .format(informat, outformat))
+    return
+
+
+def upgrade_video(indir, files, outroot, formats=["avi"]):
+    for f in files:
+        infile = os.path.abspath(os.path.join(indir, f))
+        if is_video(infile):
+            inroot, chk = file_rootname(infile)
+            inbase, format = file_format(inroot)
+            if format in formats:
+                outfile = os.path.abspath(
+                    os.path.join(outroot, "{}.{}".format(inbase, "m4v")))
+                convert_video(infile, outfile)
+    return

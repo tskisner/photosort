@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+
+from __future__ import (absolute_import, division, print_function,
+    unicode_literals)
+
+import os
+import sys
+import shutil
+import re
+import argparse
+
+import photosort as ps
+
+
+def main():
+    parser = argparse.ArgumentParser(\
+        description="Convert old videos into newer formats." )
+    parser.add_argument( "--indir", required=True, default="",
+        help="input directory" )
+    parser.add_argument( "--outdir", required=True, default="",
+        help="output directory" )
+    parser.add_argument( "--formats", required=False, default="avi",
+        help="comma separated list of old formats to convert." )
+
+    args = parser.parse_args()
+
+    indir = os.path.abspath(args.indir)
+    outdir = os.path.abspath(args.outdir)
+
+    if not os.path.isdir(outdir):
+        os.mkdir(outdir)
+
+    for root, dirs, files in os.walk(indir):
+        ps.upgrade_video(root, files, outdir, formats=args.formats.split(","))
+
+    return
+
+
+
+if __name__ == "__main__":
+    main()

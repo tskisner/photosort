@@ -143,6 +143,17 @@ def file_rootname(full):
     return filename, ckshort
 
 
+def file_format(filename):
+    base = os.path.basename(filename)
+    mat = re.match("(.*)\.(.*)", base)
+    if mat is None:
+        raise RuntimeError("file name {} does not have an extension"\
+            .format(filename))
+    root = mat.group(1)
+    ext = mat.group(2)
+    return root, ext.lower()
+
+
 def is_image(filename):
     base = os.path.basename(filename)
     mat = re.match("(.*)\.(.*)", base)
