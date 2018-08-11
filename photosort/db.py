@@ -13,7 +13,7 @@ class DB(object):
 
 
     def __init__(self, path, mode='w'):
-        
+
         self.path = path
         create = True
         if ( os.path.exists(self.path) ):
@@ -21,7 +21,8 @@ class DB(object):
 
         self.mode = mode
         if ( mode == 'r' ) and ( create ):
-            raise RuntimeError("cannot open a non-existent DB in read-only mode")
+            raise RuntimeError(\
+                "cannot open a non-existent DB in read-only mode")
 
         self.conn = None
         try:
@@ -96,5 +97,3 @@ if __name__ == "__main__":
         print('cannot find md5 sum {}!'.format(img.md5))
 
     print(result)
-
-

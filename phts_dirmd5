@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 from __future__ import (absolute_import, division, print_function,
     unicode_literals)
@@ -43,9 +44,12 @@ def process_dir(dcmp, lpath, rpath):
 
 
 def main():
-    parser = argparse.ArgumentParser( description='Compare file trees with md5 sums' )
-    parser.add_argument( '--dirleft', required=True, default='', help='directory 1' )
-    parser.add_argument( '--dirright', required=True, default='', help='directory 2' )
+    parser = argparse.ArgumentParser(\
+        description="Compare file trees with md5 sums" )
+    parser.add_argument( "--dirleft", required=True, default="",
+        help="directory 1" )
+    parser.add_argument( "--dirright", required=True, default="",
+        help="directory 2" )
     args = parser.parse_args()
 
     dleft = os.path.abspath(args.dirleft)
@@ -58,4 +62,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
