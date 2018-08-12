@@ -180,10 +180,22 @@ def check_media(db, indir, files, outroot, missing, verbose=False):
     return missing
 
 
-def convert_video(infile, outfile):
+def convert_video(infile, outfile, force=False, skip_apple=True):
     if not is_video(infile):
         raise RuntimeError("cannot convert non-video file {}".format(infile))
+
+    if os.path.isfile(outfile) and not force:
+        print("Skipping existing file {}".format(outfile))
+        return
+
     invid = Video(infile)
+    # See if we should skip apple videos
+    if skip_apple:
+        if "Make" in invid.meta:
+            if invid.meta["Make"] == "Apple":
+                print("Skipping Apple video {}".format(infile))
+                return
+
     # get the date as a tuple
     date = (invid.year, invid.month, invid.day, invid.hour,
         invid.minute, invid.second)
@@ -196,9 +208,13 @@ def convert_video(infile, outfile):
             com = ["ffmpeg", "-y", "-i", infile, "-c:v", "libx264", "-pix_fmt",
                 "yuv420p", "-preset:v", "slow", "-profile:v", "baseline",
                 "-crf", "23", outfile]
-            code = sp.check_call(com)
-            file_setmetadate(outfile, date)
-            file_setdate(outfile, date)
+            try:
+                code = sp.check_call(com)
+                file_setmetadate(outfile, date)
+                file_setdate(outfile, date)
+                print("Finished converting {}".format(infile))
+            except:
+                print("Conversion failed for {}".format(infile))
         else:
             raise NotImplementedError("Cannot convert '{}' videos to '{}'"\
                 .format(informat, outformat))
