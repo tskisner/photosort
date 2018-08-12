@@ -224,14 +224,16 @@ def convert_video(infile, outfile, force=False, skip_apple=True):
     return
 
 
-def upgrade_video(indir, files, outroot, formats=["avi"]):
+def upgrade_video(indir, reldir, files, outdir, formats=["avi"]):
     for f in files:
-        infile = os.path.abspath(os.path.join(indir, f))
+        infile = os.path.abspath(os.path.join(indir, reldir, f))
         if is_video(infile):
             inroot, chk = file_rootname(infile)
             inbase, format = file_format(inroot)
             if format in formats:
+                outloc = os.path.join(outdir, reldir)
+                os.makedirs(outloc, exist_ok=True)
                 outfile = os.path.abspath(
-                    os.path.join(outroot, "{}.{}".format(inbase, "m4v")))
+                    os.path.join(outloc, "{}.{}".format(inbase, "m4v")))
                 convert_video(infile, outfile)
     return

@@ -31,7 +31,9 @@ def main():
         os.mkdir(outdir)
 
     for root, dirs, files in os.walk(indir):
-        ps.upgrade_video(root, files, outdir, formats=args.formats.split(","))
+        reldir = root.replace(indir, "").strip("/")
+        ps.upgrade_video(indir, reldir, files, outdir,
+            formats=args.formats.split(","))
 
     return
 
