@@ -185,7 +185,7 @@ def convert_video(infile, outfile, force=False, skip_apple=True):
         raise RuntimeError("cannot convert non-video file {}".format(infile))
 
     if os.path.isfile(outfile) and not force:
-        print("Skipping existing file {}".format(outfile))
+        print("Skipping existing file {}".format(outfile), flush=True)
         return
 
     invid = Video(infile)
@@ -193,7 +193,7 @@ def convert_video(infile, outfile, force=False, skip_apple=True):
     if skip_apple:
         if "Make" in invid.meta:
             if invid.meta["Make"] == "Apple":
-                print("Skipping Apple video {}".format(infile))
+                print("Skipping Apple video {}".format(infile), flush=True)
                 return
 
     # get the date as a tuple
@@ -212,9 +212,9 @@ def convert_video(infile, outfile, force=False, skip_apple=True):
                 code = sp.check_call(com)
                 file_setmetadate(outfile, date)
                 file_setdate(outfile, date)
-                print("Finished converting {}".format(infile))
+                print("Finished converting {}".format(infile), flush=True)
             except:
-                print("Conversion failed for {}".format(infile))
+                print("Conversion failed for {}".format(infile), flush=True)
         else:
             raise NotImplementedError("Cannot convert '{}' videos to '{}'"\
                 .format(informat, outformat))
