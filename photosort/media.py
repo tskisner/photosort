@@ -60,8 +60,12 @@ def file_md5(filename, blocksize=2**20):
 
 
 def file_json(filename):
-    exif = sp.check_output ( [ "exiftool", "-j", "-sort", filename ],
-        universal_newlines=True )
+    exif = None
+    try:
+        exif = sp.check_output ( [ "exiftool", "-j", "-sort", filename ],
+            universal_newlines=True )
+    except:
+        exif = "[{}]"
     return json.loads(exif.rstrip("\r\n"))[0]
 
 
