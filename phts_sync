@@ -17,8 +17,8 @@ def main():
         description="Organize photos and videos by metadata." )
     parser.add_argument( "--indir", required=False, default="",
         help="input directory" )
-    parser.add_argument( "--outdir", required=True, default="",
-        help="output directory" )
+    parser.add_argument( "--photodir", required=True, default="",
+        help="output media directory" )
     parser.add_argument( "--albumdir", required=False, default=None,
         help="create new albums based on input directories and write "
         "to this directory" )
@@ -30,21 +30,21 @@ def main():
     args = parser.parse_args()
 
     indir = os.path.abspath(args.indir)
-    outdir = os.path.abspath(args.outdir)
+    photodir = os.path.abspath(args.photodir)
 
-    index = os.path.join(outdir, "photosync.db")
+    index = os.path.join(photodir, "photosync.db")
 
-    if not os.path.isdir(outdir):
-        os.mkdir(outdir)
+    if not os.path.isdir(photodir):
+        os.mkdir(photodir)
 
     if args.albumdir is not None:
-        if ps.is_subdir(args.albumdir, outdir):
+        if ps.is_subdir(args.albumdir, photodir):
             raise RuntimeError(\
                 "album directory must not be within the output directory")
         if not os.path.isdir(args.albumdir):
             os.mkdir(args.albumdir)
 
-    brokendir = os.path.join(outdir, "broken")
+    brokendir = os.path.join(photodir, "broken")
     if not os.path.isdir(brokendir):
         os.mkdir(brokendir)
 
@@ -56,13 +56,13 @@ def main():
 
     if args.reindex:
         exclude = []
-        for root, dirs, files in os.walk(outdir, topdown=True):
+        for root, dirs, files in os.walk(photodir, topdown=True):
             dirs[:] = [d for d in dirs if d not in exclude]
             ps.index_media(db, root, files, args.usefiletime)
 
     if args.indir != "":
         for root, dirs, files in os.walk(indir):
-            ps.import_media(db, root, files, outdir, args.albumdir,
+            ps.import_media(db, root, files, photodir, args.albumdir,
                 args.usefiletime)
 
 

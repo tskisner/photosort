@@ -16,7 +16,7 @@ import hashlib
 
 
 image_nonraw_ext = [
-    "jpg", "jpeg", "tif", "tiff"
+    "jpg", "jpeg", "tif", "tiff", "heic"
 ]
 
 image_raw_ext = [
@@ -244,6 +244,33 @@ def is_subdir(path, directory):
         return True
 
 
+def next_available(path):
+    """Get the next available filename.
+    """
+    if not os.path.isfile(path):
+        return path
+    dirname = os.path.dirname(path)
+    filename = os.path.basename(path)
+    mat = re.match("(.*)\.(.*)", filename)
+    if mat is None:
+        raise RuntimeError("file name {} does not have an extension"\
+            .format(filename))
+    root = mat.group(1)
+    ext = mat.group(2)
+    found = True
+    cnt = 1
+    next = None
+    while found:
+        next = os.path.join(dirname, "{}-{:02d}.{}".format(root, cnt, ext))
+        if os.path.isfile(next):
+            cnt += 1
+            if cnt > 99:
+                raise RuntimeError("too many duplicate names!")
+        else:
+            found = False
+    return next
+
+
 class Image(object):
 
     def __init__(self, path, file_time=False):
@@ -289,7 +316,7 @@ class Image(object):
         #for k, v in self.meta.items():
         #    print ("    {} = {}".format(k, v))
 
-    def export(self, path, resolution="FULL"):
+    def export(self, dir, resolution="FULL"):
         qual_opts = ["-quality", "95"]
         res_opts = []
         if resolution == "MED":
@@ -298,34 +325,49 @@ class Image(object):
         elif resolution == "LOW":
             res_opts.append("-scale")
             res_opts.append("25%")
-        com_meta = ["exiftool", "-q", "-overwrite_original", "-TagsFromFile",
-            self.path, path]
+
+        rname, ckshort = file_rootname(self.name)
 
         if self.ext.lower() in image_raw_ext:
-            # We have a raw file.  Extract with dcraw and
-            # pipe to convert.  Resize before JPEG conversion.
-            # Then copy metadata with exiftool.
-            com_convert = ["convert"]
-            com_convert.extend(res_opts)
-            com_convert.extend(qual_opts)
-            com_convert.append("pnm:-")
-            com_convert.append(path)
-            proc_dcraw = sp.Popen([ "dcraw", "-c", self.path ],
-                stdout=sp.PIPE, stderr=None, stdin=None)
-            proc_convert = sp.Popen(com_convert, stdin=proc_dcraw.stdout,
-                stdout=None, stderr=None)
-            output = proc_convert.communicate()[0]
-            proc_convert.wait()
-            proc_meta = sp.Popen(com_meta, stdout=None, stderr=None, stdin=None)
-            proc_meta.wait()
-
+            # We have a raw file.
+            if (resolution == "FULL"):
+                # just copy to output
+                path = os.path.join(dir, rname)
+                path = next_available(path)
+                shutil.copy2(self.path, path)
+            else:
+                # Extract with dcraw and pipe to convert.  Resize before JPEG
+                # conversion. Then copy metadata with exiftool.
+                path = os.path.join(dir,
+                    "{}.jpg".format(os.path.splitext(rname)[0]))
+                path = next_available(path)
+                com_convert = ["convert"]
+                com_convert.extend(res_opts)
+                com_convert.extend(qual_opts)
+                com_convert.append("pnm:-")
+                com_convert.append(path)
+                com_meta = ["exiftool", "-q", "-overwrite_original",
+                    "-TagsFromFile", self.path, path]
+                proc_dcraw = sp.Popen([ "dcraw", "-c", self.path ],
+                    stdout=sp.PIPE, stderr=None, stdin=None)
+                proc_convert = sp.Popen(com_convert, stdin=proc_dcraw.stdout,
+                    stdout=None, stderr=None)
+                output = proc_convert.communicate()[0]
+                proc_convert.wait()
+                proc_meta = sp.Popen(com_meta, stdout=None, stderr=None, stdin=None)
+                proc_meta.wait()
         else:
             if (resolution == "FULL") and (self.ext.lower() == "jpg"):
                 # copy to output
+                path = os.path.join(dir, rname)
+                path = next_available(path)
                 shutil.copy2(self.path, path)
             else:
                 # Just use convert directly, then copy
                 # metadata with exiftool.
+                path = os.path.join(dir,
+                    "{}.jpg".format(os.path.splitext(rname)))
+                path = next_available(path)
                 com = ["convert"]
                 com.extend(res_opts)
                 com.extend(qual_opts)
@@ -337,6 +379,7 @@ class Image(object):
                 proc_meta = sp.Popen(com_meta, stdout=None, stderr=None,
                     stdin=None)
                 proc_meta.wait()
+        return
 
 
 class Video(object):
@@ -383,8 +426,14 @@ class Video(object):
         #for k, v in self.meta.items():
         #    print ("    {} = {}".format(k, v))
 
-    def export(self, path, resolution="FULL"):
-        pass
+    def export(self, dir, resolution="FULL"):
+        if resolution != "FULL":
+            raise NotImplementedError("Video reduction not yet supported")
+        rname, ckshort = file_rootname(self.name)
+        path = os.path.join(dir, rname)
+        path = next_available(path)
+        shutil.copy2(self.path, path)
+        return
 
 
 
